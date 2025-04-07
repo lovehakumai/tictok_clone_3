@@ -1,26 +1,35 @@
+import { supabase } from '@/utils/supabase';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, CameraType, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
   const [isRecording, setIsRecording] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
 
-  if (!permission) {
+  if (!permission || !microphonePermission) {
     // Camera permissions are still loading.
     return <View />;
   }
 
-  if (!permission.granted) {
+  if (!permission.granted || !microphonePermission.granted) {
     // Camera permissions are not granted yet.
     return (
       <View style={styles.container}>
         <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+        <Button 
+          onPress={()=>{
+                        requestPermission();
+                        requestMicrophonePermission()
+                      }
+                  } 
+          title="grant permission" 
+        />
       </View>
     );
   }
@@ -29,34 +38,48 @@ export default function App() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
-  const recordVideo = async()=>{
-    if (isRecording) {
-      // Stop recording
-      console.log("isRecording", isRecording);
-      setIsRecording(false);
-      cameraRef.current?.stopRecording();
-    } else {
-      // Start recording
-      console.log("isRecording", isRecording);
-      setIsRecording(true);
-      const video = await cameraRef.current?.recordAsync();
-      setVideoUri(video!.uri);
-      console.log("video", video);
+  const recordVideo = async () => {
+    try {
+      if (isRecording) {
+        setIsRecording(false);
+        cameraRef.current?.stopRecording();
+      } else {
+        setIsRecording(true);
+        const video = await cameraRef.current?.recordAsync();
+        if (video) {
+          setVideoUri(video.uri);
+          console.log("Video URI:", video.uri);
+        } else {
+          console.error("Failed to record video");
+        }
+      }
+    } catch (error) {
+      console.error("Error recording video:", error);
     }
-  }
+  };
 
-  const saveVideo = () => {
+  const saveVideo = async() => {
+    console.log("saveVideo");
+    
     if (videoUri) {
-      // Save the video to the device's storage
-      // You can use a library like expo-file-system to save the video
-      // const fileUri = FileSystem.documentDirectory + 'video.mp4';
-      // await FileSystem.moveAsync({
-      //   from: videoUri,
-      //   to: fileUri,
-      // });
-      // console.log('Video saved to:', fileUri);
-      // You can also upload the video to a server or perform any other action  with it
       console.log('Video URI:', videoUri);
+      const formData = new FormData();
+      const fileName = videoUri.split('/').pop();
+      formData.append('file', {
+        uri: videoUri,
+        name: fileName,
+        type: `video/${fileName?.split('.').pop()}}`,
+      });
+      console.log('Form Data:', formData);
+      const {data, error} = await supabase.storage
+        .from('Video')
+        .upload(fileName, formData, {
+          cacheControl: '3600000000',
+          upsert: false,
+        });
+      if (error) {
+        console.error('Error uploading video:', error);
+      }
     }
   };
 
