@@ -24,14 +24,13 @@ export default function RootLayout() {
     return null;
   }
 
-  // 子のレイアウトを邪魔しないようにシンプルに
   return (
     <AuthProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false, // ヘッダーを非表示に設定
-        }}
-      />
+      <Stack screenOptions={{headerShown: false}}>
+        <Stack.Screen name="(auth)" options={{headersShown: false}}/>
+        <Stack.Screen name="(tabs)" options={{headersShown: false}}/>
+        <Stack.Screen name="camera" options={{headersShown: false, presentation: "modal"}}/>
+      </Stack>
     </AuthProvider>
   );
 }

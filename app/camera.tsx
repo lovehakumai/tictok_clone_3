@@ -1,16 +1,19 @@
 import { supabase } from '@/utils/supabase';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, CameraType, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
-export default function App() {
+export default function camera() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
   const [isRecording, setIsRecording] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
+  const router = useRouter();
 
   if (!permission || !microphonePermission) {
     // Camera permissions are still loading.
@@ -48,7 +51,7 @@ export default function App() {
         const video = await cameraRef.current?.recordAsync();
         if (video) {
           setVideoUri(video.uri);
-          console.log("Video URI:", video.uri);
+          console.log("recordVideo / Video URI:", video.uri);
         } else {
           console.error("Failed to record video");
         }
@@ -58,37 +61,72 @@ export default function App() {
     }
   };
 
-  const saveVideo = async() => {
+  const saveVideo = async () => {
     console.log("saveVideo");
-    
+
     if (videoUri) {
-      console.log('Video URI:', videoUri);
-      const formData = new FormData();
+      console.log('save / Video URI:', videoUri);
       const fileName = videoUri.split('/').pop();
-      formData.append('file', {
-        uri: videoUri,
-        name: fileName,
-        type: `video/${fileName?.split('.').pop()}}`,
-      });
-      console.log('Form Data:', formData);
-      const {data, error} = await supabase.storage
-        .from('Video')
-        .upload(fileName, formData, {
-          cacheControl: '3600000000',
-          upsert: false,
-        });
-      if (error) {
-        console.error('Error uploading video:', error);
+      if(fileName === undefined) {
+        console.error('File name is undefined');
+        return;
+      }
+      const formData = new FormData();
+
+      // Upload the video to storage and insert its uri to table
+      try {
+        // Upload the video to Supabase storage
+        const { data, error } = await supabase.storage
+          .from('videos')
+          .upload(fileName, {
+            uri: videoUri,
+            type: `video/${fileName?.split('.').pop()}`,
+            name: fileName,
+          });
+          if (error) {
+            console.error('Error uploading video:', error);
+            return;
+          }
+
+        // Insert the video URL into the table
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        const { error: videoErrror } = await supabase
+          .from('Video')
+          .insert({
+            uri: data?.path,
+            user_id: userData.user?.id, 
+            title: fileName
+          });
+        if (videoErrror) {
+          console.error('Error inserting video URL into table:', videoErrror);
+          return;
+        }
+        console.log('Video uploaded to storage successfully:', data);
+        router.back();
+      } catch (error) {
+        console.error('Unexpected error uploading video:', error);
       }
     }
+  };
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images', 'videos'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
   };
 
   return (
     <CameraView mode='video' ref={cameraRef} style={{flex: 1}} facing={facing}>
       <View className='flex-1 justify-end'>
         <View className='flex-row items-center justify-around mb-10' >
-          <TouchableOpacity className='items-end justify-end' onPress={toggleCameraFacing}>
-            <Ionicons name="camera-reverse" size={50} color="transparent" />
+          <TouchableOpacity className='items-end justify-end' onPress={pickImage}>
+            <Ionicons name="aperture" size={50} color="white" />
           </TouchableOpacity>
           {videoUri ? (
             <TouchableOpacity className="items-end justify-end" onPress={saveVideo}>

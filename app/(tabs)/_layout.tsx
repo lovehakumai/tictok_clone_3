@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -7,6 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function TabLayout() {
 
+  const router = useRouter();
   return (
     <Tabs
       screenOptions={{
@@ -28,13 +29,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="camera"
+        name="empty"
         options={{
           title: '',
           tabBarIcon: ()=>
             <View className='absolute w-[75px] h-[75px]'>
               <Ionicons name="add-circle" size={75} color="black"/>
             </View>
+        }}
+        listeners={{
+          tabPress: (e:Event) => {
+            e.preventDefault();
+            router.push('/camera');
+          }
         }}
       />
       <Tabs.Screen
