@@ -1,10 +1,15 @@
 import { ConfigContext, ExpoConfig } from "expo/config";
 
+
 const IS_DEV = process.env.APP_VARIANT === 'development';
 const IS_PREVIEW = process.env.APP_VARIANT === 'preview';
 
 const getUniqueIdentifier = () => {
+  console.log("IS_DEV" , IS_DEV);
+  console.log("IS_PREVIEW", IS_PREVIEW);
+  
   if (IS_DEV) {
+    console.log("getUniqueIdentifier / IS_DEV");
     return 'com.pogimasa.tictok.dev';
   }
 
@@ -19,11 +24,9 @@ const getAppName = () => {
   if (IS_DEV) {
     return 'tictok (Dev)';
   }
-
   if (IS_PREVIEW) {
     return 'tictok (Preview)';
   }
-
   return 'tictok: clone of tiktok';
 };
 
@@ -37,7 +40,6 @@ export default ({config}: ConfigContext): ExpoConfig=>({
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": getUniqueIdentifier(),
@@ -81,6 +83,12 @@ export default ({config}: ConfigContext): ExpoConfig=>({
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
         }
       ]
     ],

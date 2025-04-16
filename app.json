@@ -6,14 +6,7 @@
       }
     },
     "android": {
-      "package": "com.masaharu_ura.tictok"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/c2f30144-62d5-447f-94aa-9e54d110fda8"
-    },
-    "ios": {}
+      "package": "com.masaharu_ura.tiktok"
+    }
   }
 }

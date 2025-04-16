@@ -55,7 +55,7 @@ model Comment {
   user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   video_id      String
   video         Video    @relation(fields: [video_id], references: [id], onDelete: Cascade)
-  video_user_id String
+  video_user_id String?
   text          String
   created_at    DateTime @default(now())
 }
