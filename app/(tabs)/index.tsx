@@ -1,4 +1,4 @@
-import { View, Dimensions, Share } from 'react-native';
+import { View, Dimensions, Share, Text } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -7,6 +7,7 @@ import VideoPlayer from '@/components/video';
 import { useAuth } from '@/providers/AuthProvider';
 import { VideoRow } from '@/types';
 import Header from '@/components/header';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 
 export default function HomeScreen() {
@@ -26,11 +27,10 @@ export default function HomeScreen() {
       .order('created_at', { ascending: false })
 
       if(data){
-        console.log("getVideo / data", data);
         getSignUrls(data);
       }
       if(error){
-        console.log("getVideo / error", error);
+        console.error("getVideo / error", error);
       }
     } catch (error) {
       console.error("getVideos / error", error);
@@ -53,13 +53,11 @@ export default function HomeScreen() {
       });
 
       setVideos(videoUrls);
-      console.log("getSignUrls / videoUrls", videoUrls);
     
     if (error) {
       console.error("getSignUrls / error", error);
       return;
     }
-    console.log("getSignUrls / data", data);
     } catch (error) {
       error instanceof Error && console.error("getSignUrls / error", error);
     }
@@ -78,6 +76,12 @@ export default function HomeScreen() {
         onViewableItemsChanged={e => setActiveIndex(e.viewableItems[0].key)}
         renderItem={({item}) => <VideoPlayer item={item} isViewable={activeIndex === item.id}/>}
         keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+                  <View className='flex-1 h-full items-center justify-center bg-black'>
+                    <Ionicons name='sad' size={20} color={"white"}/>
+                    <Text className='text-white'>No Videos Found</Text>
+                  </View>
+                }
       />
     </View>
   );

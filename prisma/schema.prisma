@@ -73,7 +73,7 @@ model Chat {
 model Follower {
   id               String   @id @default(dbgenerated("uuid_generate_v4()"))
   user_id          String
-  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   follower_user_id String
   created_at       DateTime @default(now())
 }

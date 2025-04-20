@@ -31,7 +31,10 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{headersShown: false}}/>
         <Stack.Screen name="(tabs)" options={{headersShown: false}}/>
         <Stack.Screen name="comment" options={{headersShown: false, presantation: "modal"}}/>
+        <Stack.Screen name="followers" options={{headersShown: false}}/>
         <Stack.Screen name='user' options={{headerShown: false}}/>
+        <Stack.Screen name='chat' options={{headerShown: false}}/>
+        <Stack.Screen name='activity' options={{headerShown: false}}/>
         <Stack.Screen name='search' options={{headerShown: false}}/>
         <Stack.Screen name="camera" options={{headersShown: false, presentation: "modal"}}/>
       </Stack>

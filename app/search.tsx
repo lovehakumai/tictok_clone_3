@@ -1,6 +1,7 @@
 import Header from "@/components/header";
 import { supabase } from "@/utils/supabase";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
 import { useState } from "react";
 import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native";
@@ -9,7 +10,6 @@ export default function SearchScreen() {
     const [text, setText] = useState<string>("");
     const [results, setResults] = useState<any[]>([]);
     const search = async () => {
-        console.log(text);
         const { data, error } = await supabase
             .from('User')
             .select('*')
@@ -37,16 +37,20 @@ export default function SearchScreen() {
             </View>
             <FlatList
                 data={results}
-                renderItem={({ item }) => (
-                    <View className="flex-row gap-2 items-center w-full m-3">
-                        <Image
-                            source={{ uri: 'https://placehold.co/40x40' }}
-                            className="w-10 h-10 rounded-full bg-black"
-                        />
-                        <View>
-                            <Text className="font-bold text-base">{item.username}</Text>
+                renderItem={({ item: user }) => (
+                    <TouchableOpacity
+                        className="flex-row gap-2 items-center w-full m-3"
+                        onPress={() => router.push(`/user?user_id=${user.id}`)}>
+                        <View className="flex-row gap-2 items-center w-full m-3">
+                            <Image
+                                source={{ uri: 'https://placehold.co/40x40' }}
+                                className="w-10 h-10 rounded-full bg-black"
+                            />
+                            <View>
+                                <Text className="font-bold text-base">{user.username}</Text>
+                            </View>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
         </SafeAreaView>

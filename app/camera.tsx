@@ -43,7 +43,6 @@ export default function camera() {
   }
 
   function toggleCameraFacing() {
-    console.log("toggleCameraFacing");
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
@@ -57,7 +56,6 @@ export default function camera() {
         const video = await cameraRef.current?.recordAsync();
         if (video) {
           setVideoUri(video.uri);
-          console.log("recordVideo / Video URI:", video.uri);
         } else {
           console.error("Failed to record video");
         }
@@ -68,17 +66,13 @@ export default function camera() {
   };
 
   const saveVideo = async () => {
-    console.log("saveVideo");
-
 
     if (videoUri) {
-      console.log('save / Video URI:', videoUri);
       const fileName = videoUri.split('/').pop();
       if(fileName === undefined) {
         console.error('File name is undefined');
         return;
       }
-      
 
       // Upload the video to storage and insert its uri to table
       try {
@@ -88,7 +82,6 @@ export default function camera() {
           from: videoUri,
           to: localUri,
         });
-        console.log('Video copied to local URI:', localUri);
 
         // 2. Upload the video to Supabase storage
         const { data, error } = await supabase.storage
@@ -120,7 +113,6 @@ export default function camera() {
           console.error('Error inserting video URL into table:', videoError);
           return;
         }
-        console.log('Video uploaded to storage successfully:', data);
         router.back();
       } catch (error) {
         console.error('Unexpected error uploading video:', error);
@@ -129,7 +121,6 @@ export default function camera() {
   };
 
   const pickImage = async () => {
-    console.log("pickImage");
     
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -138,15 +129,13 @@ export default function camera() {
       aspect: [4, 3],
       quality: 0.1,
     });
-    console.log("pickImage / result:", result);
     
     if (result.canceled) {
-      console.log("pickImage / canceled");
+      console.error("pickImage / canceled");
       return;
     }
     if(result.assets[0].type === 'video') {
       setVideoUri(result.assets[0].uri);
-      console.log("pickImage / Video URI:", result.assets[0].uri);  
     }
   };
 

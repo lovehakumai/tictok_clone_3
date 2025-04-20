@@ -22,3 +22,9 @@ export interface LikesType {
   video_id: string;
   video_user_id: string;
 }
+
+export interface FollowingType {
+  id: string;
+  follower_user_id: string;
+  user_id: string;
+}
