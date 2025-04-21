@@ -77,7 +77,7 @@ export default function inbox() {
             <View className='flex-row justify-between w-full items-center pr-3'>
               <View className='flex-row gap-2'>
                 <Image
-                  source={{ uri: `${process.env.EXPO_PUBLIC_BUCKET}/avatars/${authUser?.id}/avatar.jpg`||'https://placehold.co/40x40' }}
+                  source={{ uri: `${process.env.EXPO_PUBLIC_BUCKET}/avatars/${item?.id}/avatar.jpg`||'https://placehold.co/40x40' }}
                   className="w-12 h-12 rounded-full bg-black items-center justify-center"
                 />
                 <View>

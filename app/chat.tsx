@@ -22,7 +22,7 @@ export default function Comment() {
             event: 'INSERT',
             schema: 'public',
             table: 'Chat',
-            filter: 'users_key=eq.${users_key}'
+            filter: `users_key=eq.${users_key}`
         }, (payload)=>{
             setMessage(message => [...message, payload.new])
         }).subscribe()

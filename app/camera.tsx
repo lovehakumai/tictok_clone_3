@@ -113,7 +113,7 @@ export default function camera() {
           console.error('Error inserting video URL into table:', videoError);
           return;
         }
-        router.back();
+        router.push('index/');
       } catch (error) {
         console.error('Unexpected error uploading video:', error);
       }

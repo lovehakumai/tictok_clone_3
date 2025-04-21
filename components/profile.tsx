@@ -39,12 +39,66 @@ export default function Profile({
     }, [user?.id]);
 
     // --- pickImage, saveImage (前回の修正を適用推奨) ---
-    const pickImage = async () => { /* ... */ };
-    const saveImage = async (uri: string) => { /* ... (前回推奨の実装へ) ... */ };
+    const pickImage = async () => {
+        if (authUser?.id !== user?.id) return;
+        // No permissions request is necessary for launching the image library
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images', 'videos'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.1,
+        });
+        if (result.canceled) {
+            console.error("pickImage / canceled");
+            return;
+        }
+        if (result.assets[0].type === 'image') {
+            setProfilePictureUrl(result.assets[0].uri);
+            saveImage(result.assets[0].uri);
+        }
+    };
 
-    // --- unFollow, follow (変更なし) ---
-    const unFollow = async () => { /* ... */ };
-    const follow = async () => { /* ... */ };
+    const saveImage = async (uri: string) => {
+        const fileName = 'avatar.jpg';
+        const { error } = await supabase.storage
+            .from(`avatars/${user?.id}`)
+            .upload(fileName, {
+                uri: uri,
+                type: `image/${fileName?.split('.').pop()}`,
+                name: fileName,
+            }, {
+                cacheControl: '3600',
+                upsert: false,
+                quality: 0.1,
+            });
+        if (error) {
+            console.error('Error uploading Image:', error);
+            return;
+        }
+    }
+
+    const follow = async () => {
+        const { error } = await supabase
+          .from('Follower')
+          .insert({
+            follower_user_id: user?.id,
+            user_id: item.User.id,
+          });
+        if (!error && !!user) {
+          await getFollowing(user.id);
+        }
+      }
+    
+      const unFollow = async () => {
+        const { error } = await supabase
+          .from('Follower')
+          .delete()
+          .eq('user_id', user?.id)
+          .eq('follower_user_id', authUser?.id);
+        if (!error && !!user) {
+          await getFollowing(user.id);
+        }
+      }
 
     // --- getVideos / getSignedUri (ロギングは適宜有効化) ---
     const getVideos = async () => {
@@ -63,7 +117,8 @@ export default function Profile({
             } else if (videoData && videoData.length > 0) {
                 await getSignedUri(videoData as VideoRow[]);
             } else { setVideos([]); }
-        } catch (e) { console.error("Exception fetching videos:", e); setVideos([]);
+        } catch (e) {
+            console.error("Exception fetching videos:", e); setVideos([]);
         } finally { setLoadingVideos(false); }
     }
 
@@ -78,8 +133,6 @@ export default function Profile({
                 .from("videos") // ★★★★★ ここが正しいバケット名か確認！ ★★★★★
                 .createSignedUrls(paths, 3600); // 1 hour expiration
 
-            // console.log("Signed URLs Data:", signedUrlsData); // デバッグ用
-
             if (error) {
                 console.error("Error creating signed URLs:", error);
                 const result = validVideoData.map(v => ({ ...v, signedUrl: null })); // signedUrlはnullに
@@ -93,13 +146,13 @@ export default function Profile({
                 setVideos(result);
                 // console.log("Result with Signed URLs:", result); // デバッグ用
             } else {
-                 const result = validVideoData.map(v => ({ ...v, signedUrl: null }));
-                 setVideos(result);
+                const result = validVideoData.map(v => ({ ...v, signedUrl: null }));
+                setVideos(result);
             }
         } catch (e) {
-             console.error("Exception creating signed URLs:", e);
-             const result = validVideoData.map(v => ({ ...v, signedUrl: null }));
-             setVideos(result);
+            console.error("Exception creating signed URLs:", e);
+            const result = validVideoData.map(v => ({ ...v, signedUrl: null }));
+            setVideos(result);
         }
     }
 
@@ -109,19 +162,19 @@ export default function Profile({
         <SafeAreaView style={styles.container}>
             {/* --- プロフィールヘッダー --- */}
             <View style={styles.profileHeader}>
-                 <TouchableOpacity onPress={pickImage} disabled={authUser?.id !== user?.id}>
-                    <Image source={{ uri: profilePictureUrl || 'https://placehold.co/80x80?text=No+Image' }} style={styles.profileImage}/>
+                <TouchableOpacity onPress={pickImage} disabled={authUser?.id !== user?.id}>
+                    <Image source={{ uri: profilePictureUrl || 'https://placehold.co/80x80?text=No+Image' }} style={styles.profileImage} />
                 </TouchableOpacity>
                 <Text style={styles.username}>@{user?.username || 'username'}</Text>
-                 {/* ... Stats & Buttons ... */}
-                 <View style={styles.statsContainer}>
+                {/* ... Stats & Buttons ... */}
+                <View style={styles.statsContainer}>
                     <View style={styles.statItem}><Text style={styles.statLabel}>Following</Text><Text style={styles.statValue}>{following?.length || 0}</Text></View>
                     <View style={styles.statItem}><Text style={styles.statLabel}>Followers</Text><Text style={styles.statValue}>{followers?.length || 0}</Text></View>
                     <View style={styles.statItem}><Text style={styles.statLabel}>Likes</Text><Text style={styles.statValue}>{likes?.length || 0}</Text></View>
-                 </View>
-                 { authUser?.id === user?.id ? (
-                      <TouchableOpacity style={styles.signOutButton} onPress={signOut}><Text style={styles.buttonText}>Sign out</Text></TouchableOpacity>
-                  ) : ( <View style={styles.followButtonContainer}>{ myFollowing && myFollowing.some(f => f.user_id === user?.id) ? (<TouchableOpacity style={[styles.followButton, styles.unfollowButton]} onPress={unFollow}><Text style={styles.buttonText}>Unfollow</Text></TouchableOpacity>) : (<TouchableOpacity style={[styles.followButton, styles.followActiveButton]} onPress={follow}><Text style={styles.buttonText}>Follow</Text></TouchableOpacity>) }</View>) }
+                </View>
+                {authUser?.id === user?.id ? (
+                    <TouchableOpacity style={styles.signOutButton} onPress={signOut}><Text style={styles.buttonText}>Sign out</Text></TouchableOpacity>
+                ) : (<View style={styles.followButtonContainer}>{myFollowing && myFollowing.some(f => f.user_id === user?.id) ? (<TouchableOpacity style={[styles.followButton, styles.unfollowButton]} onPress={unFollow}><Text style={styles.buttonText}>Unfollow</Text></TouchableOpacity>) : (<TouchableOpacity style={[styles.followButton, styles.followActiveButton]} onPress={follow}><Text style={styles.buttonText}>Follow</Text></TouchableOpacity>)}</View>)}
             </View>
 
             {/* ★ デバッグ用Text削除 */}
@@ -191,8 +244,8 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     videoGridContent: {
-         padding: itemPadding, // グリッド全体のパディング
-         // alignItems: 'flex-start', // 不要な場合が多い
+        padding: itemPadding, // グリッド全体のパディング
+        // alignItems: 'flex-start', // 不要な場合が多い
     },
     // ★ アイテムコンテナ (TouchableOpacity) のスタイル
     videoItemContainer: {
